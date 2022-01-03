@@ -33,15 +33,17 @@ if len(x) != 999:
 path = ".\\Fit_Images\\Training\\"
 x = os.listdir(path)
 print(x,len(x))
+time = float(input("Duration of image shown?  :"))
 for i in range(len(x)):
     print(i)
     if "___" not in x[i]:
         print(x[i],path)
         data = ip([str(x[i])],path)
-        data.show_img()
-        label = str(input("Enter estimated cloud cover :"))
+        data.show_img(time=time)
+        label = str(int(input("Enter estimated cloud cover :")))
         name = x[i]
-        os.rename(path+str(name),path+name[len(name)-4]+"___"+label+".fit")
-        print("Renamed")
+        new_name = path+name[:len(name)-4]+"___"+label+".fit"
+        os.rename(path+str(name),new_name)
+        print("Renamed from :",path+str(name),"to :",new_name)
     else:
         print("Already done.")

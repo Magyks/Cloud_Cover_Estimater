@@ -22,10 +22,10 @@ class image_process:
             self.hdu_data.append(hdul[0].data)
             hdul.close()
 
-    def show_img(self,idx=0):
+    def show_img(self,time=3,CMAP = "gray",idx=0):
         plt.clf()
-        plt.imshow(self.hdu_data[idx])
-        plt.pause(3)
+        plt.imshow(self.hdu_data[idx],cmap=CMAP)
+        plt.pause(time)
         plt.close()
 
     def create_masks(self,threshold = 3600,overwrite=False):
