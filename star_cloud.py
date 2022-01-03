@@ -9,23 +9,23 @@ file_names =   ["Full_cloud.fit","Partially.fit","Starry.fit","Sky_1.fit","Sky_2
 sorted_names = ["Full_cloud.fit","Sky_1.fit","Sky_3.fit","Sky_10.fit","Sky_8.fit","Partially.fit","Sky_5.fit","Sky_6.fit","Sky_2.fit","Sky_7.fit","Starry.fit","Sky_9.fit","Sky_4.fit"]
 estimated_cloud = [100,40,0,100,20,100,0,30,20,0,100,0,100]
 sorted_cloud =    [100,100,100,100,100,40,30,20,20,0,0,0,0]
-file_location = "C:\\Users\\alexh\\Documents\\Scripts\\Fit_Images\\"
+file_location = ".\\Fit_Images\\"
 
-training_location = "C:\\Users\\alexh\\Documents\\Scripts\\Fit_Images\\Training\\"
+training_location = ".\\Fit_Images\\Training\\"
 training_files = os.listdir(training_location)
-for i in range()
+
 
 def create_values(overwrite = False):
-    if os.path.exists("C://Users//alexh//Documents//Scripts//Results.pkl") and overwrite == False:
+    if os.path.exists(".//Results.pkl") and overwrite == False:
         loaded_values = load_values()
     else:
         file_names =   ["Full_cloud.fit","Partially.fit","Starry.fit","Sky_1.fit","Sky_2.fit","Sky_3.fit","Sky_4.fit","Sky_5.fit","Sky_6.fit","Sky_7.fit","Sky_8.fit","Sky_9.fit","Sky_10.fit"]
         sorted_names = ["Full_cloud.fit","Sky_1.fit","Sky_3.fit","Sky_10.fit","Sky_8.fit","Partially.fit","Sky_5.fit","Sky_6.fit","Sky_2.fit","Sky_7.fit","Starry.fit","Sky_9.fit","Sky_4.fit"]
         estimated_cloud = [100,40,0,100,20,100,0,30,20,0,100,0,100]
         sorted_cloud =    [100,100,100,100,100,40,30,20,20,0,0,0,0]
-        file_location = "C:\\Users\\alexh\\Documents\\Scripts\\Fit_Images\\"
+        file_location = ".\\Fit_Images\\"
 
-        perfect = sm.image_process(["Starry.fit"],"C:\\Users\\alexh\\Documents\\Scripts\\Fit_Images\\")
+        perfect = sm.image_process(["Starry.fit"],".\\Fit_Images\\")
         trial = sm.image_process(file_names,file_location)
         trial.create_masks()
         trial.save_mask()
@@ -117,7 +117,7 @@ net.save() """
 
 
 """ perfect = sm.image_process(["Starry.fit"],
-                            "C:\\Users\\alexh\\Documents\\Scripts\\Fit_Images\\")
+                            ".\\Fit_Images\\")
 perfect.median_edgelum(perfect.hdu_data[0])
 x = perfect.e_avg
 print(x) """

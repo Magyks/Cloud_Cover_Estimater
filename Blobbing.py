@@ -4,7 +4,7 @@ import matplotlib.image as mpimg
 import numpy 
 import cv2 as cv2
 
-file_name = "C:\\Users\\alexh\\Documents\\Scripts\\Fit_Images\\Partially.fit"
+file_name = ".\\Fit_Images\\Partially.fit"
 hdul = fits.open(file_name)
 hdu_data = hdul[0].data
 hdul.close()
