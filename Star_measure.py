@@ -58,7 +58,7 @@ class image_process:
         "This method creates or loades the masks of the provided files, later turned into PKL files"
         print("New mask? :",new_mask,", Save? :",save)
         self.mask_data = []
-        for i in range(len(self.filenames)):
+        for i in range(len(self.file_names)):
             curr_name = self.file_names[i]                                ## Current file name
             x = os.path.exists(self.file_location+curr_name[:len(curr_name)-4]+"_mask.txt")  ## Check the file exists
             if x == False or new_mask == True:                            ## if the file dosen's exist or needs to be re-written
@@ -75,13 +75,13 @@ class image_process:
                 if save:
                     ## save the new mask
                     print("Mask saved")
-                    numpy.savetxt(self.location+curr_name[:len(curr_name)-4]+"_mask.txt",array)
+                    numpy.savetxt(self.file_location+curr_name[:len(curr_name)-4]+"_mask.txt",array)
                 else:
                     print("Single run mask only, not saved.")
             else:
                 ## Load a previous mask
                 print("Loading mask ",i)
-                array = numpy.loadtxt(self.location+curr_name[:len(curr_name)-4]+"_mask.txt","uint8")
+                array = numpy.loadtxt(self.file_location+curr_name[:len(curr_name)-4]+"_mask.txt","uint8")
             
             ## Add it to the mask array
             self.mask_data.append(array)
@@ -314,7 +314,11 @@ class image_process:
         ag_1 = numpy.sum(self.circle_sum) /len(self.circle_sum)
         self.circlesum(perfect)
         ag_2 = numpy.sum(self.circle_sum)/len(self.circle_sum)
-        for i in range(len(array)):
-            for j in range(len(array[0])):
+        x = len(array)
+        y = len(array[0])
+        if x != len(perfect) or y != len(perfect[0]):
+            print(x,y,len(perfect),len(perfect[0]))
+        for i in range(x):
+            for j in range(y):
                 array[i][j] -= perfect[i][j] *ag_1/ag_2
         return array
