@@ -28,7 +28,7 @@ class image_process:
         plt.pause(time)
         plt.close()
 
-    def create_masks(self,threshold = 3600,overwrite=False):
+    def create_masks_old(self,threshold = 3600,overwrite=False,save=True):
         "Creates a mask of all the given array using a standard deviation threshold test" 
         x = os.path.exists(self.file_names[0][:len(self.file_names[0])-4]+"_mask.txt")
         print("Overwrite is set to ",overwrite,".")
@@ -39,24 +39,53 @@ class image_process:
         else:
             print("Creating new mask(s).")
             self.mask_data = []
-            #plt.clf()
-            #print("HDU_Data")a\
-            #plt.imshow(self.hdu_data[0])
-            #plt.show()
             for k in range(len(self.hdu_data)):
                 array = copy.copy(self.hdu_data[k])
                 x_max = len(array)
                 y_max = len(array[0])
                 for i in range(x_max):
-                    #array_name = self.file_names[k]
-                    #print(str(i)+"/"+str(x_max)+" Rows completed for "+array_name)
-                
                     for j in range(y_max):
                         self.numstd(array,(i,j)) 
                         if self.std > threshold :
                             array[i][j] = 0
                 print("mask ",k+1,"out of ",len(self.hdu_data)," created.")
                 self.mask_data.append(array)
+            if save==True:
+                self.save_mask()
+
+    def create_masks(self,threshold = 3600,new_mask = False,save = True):
+        "Create mask method re-written to allow for individual file evaluation and mask creation"
+        "This method creates or loades the masks of the provided files, later turned into PKL files"
+        print("New mask? :",new_mask,", Save? :",save)
+        self.mask_data = []
+        for i in range(len(self.filenames)):
+            curr_name = self.file_names[i]                                ## Current file name
+            x = os.path.exists(self.file_location+curr_name[:len(curr_name)-4]+"_mask.txt")  ## Check the file exists
+            if x == False or new_mask == True:                            ## if the file dosen's exist or needs to be re-written
+                ## Create a new mask
+                print("Creating a new mask for file ",i)
+                array = copy.copy(self.hdu_data[i])
+                x_max = len(array)
+                y_max = len(array[0])
+                for j in range(x_max):
+                    for k in range(y_max):
+                        self.numstd(array,(j,k)) 
+                        if self.std > threshold :
+                            array[j][k] = 0
+                if save:
+                    ## save the new mask
+                    print("Mask saved")
+                    numpy.savetxt(self.location+curr_name[:len(curr_name)-4]+"_mask.txt",array)
+                else:
+                    print("Single run mask only, not saved.")
+            else:
+                ## Load a previous mask
+                print("Loading mask ",i)
+                array = numpy.loadtxt(self.location+curr_name[:len(curr_name)-4]+"_mask.txt","uint8")
+            
+            ## Add it to the mask array
+            self.mask_data.append(array)
+            print("Mask ",i+1,"out of ",len(self.hdu_data)," loaded/created.")
 
     def loadmask(self):
         try:

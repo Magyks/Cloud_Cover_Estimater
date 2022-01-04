@@ -3,102 +3,106 @@ import matplotlib.pyplot as plt
 import copy,pickle,nn ,os
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
 import os
 
+## Main code
+
+## Test Files, Main ones are the first 3
 file_names =   ["Full_cloud.fit","Partially.fit","Starry.fit","Sky_1.fit","Sky_2.fit","Sky_3.fit","Sky_4.fit","Sky_5.fit","Sky_6.fit","Sky_7.fit","Sky_8.fit","Sky_9.fit","Sky_10.fit"]
-sorted_names = ["Full_cloud.fit","Sky_1.fit","Sky_3.fit","Sky_10.fit","Sky_8.fit","Partially.fit","Sky_5.fit","Sky_6.fit","Sky_2.fit","Sky_7.fit","Starry.fit","Sky_9.fit","Sky_4.fit"]
 estimated_cloud = [100,40,0,100,20,100,0,30,20,0,100,0,100]
-sorted_cloud =    [100,100,100,100,100,40,30,20,20,0,0,0,0]
+estimated_cloud = np.array(estimated_cloud)/100
 file_location = ".\\Fit_Images\\"
 
+## Training files, size should be 999
 training_location = ".\\Fit_Images\\Training\\"
 training_files = os.listdir(training_location)
+training_values = []
 
-
-def create_values(overwrite = False):
-    if os.path.exists(".//Results.pkl") and overwrite == False:
-        loaded_values = load_values()
+for i in range(len(training_files)):
+    end = training_files[i].split("___")
+    val = int(end[1][:len(end[1])-4])
+    if val < 0 or val > 100:
+        print("Value invalid for file :",training_files[i])
     else:
-        file_names =   ["Full_cloud.fit","Partially.fit","Starry.fit","Sky_1.fit","Sky_2.fit","Sky_3.fit","Sky_4.fit","Sky_5.fit","Sky_6.fit","Sky_7.fit","Sky_8.fit","Sky_9.fit","Sky_10.fit"]
-        sorted_names = ["Full_cloud.fit","Sky_1.fit","Sky_3.fit","Sky_10.fit","Sky_8.fit","Partially.fit","Sky_5.fit","Sky_6.fit","Sky_2.fit","Sky_7.fit","Starry.fit","Sky_9.fit","Sky_4.fit"]
-        estimated_cloud = [100,40,0,100,20,100,0,30,20,0,100,0,100]
-        sorted_cloud =    [100,100,100,100,100,40,30,20,20,0,0,0,0]
-        file_location = ".\\Fit_Images\\"
+        training_values.append(val/100)
+print("Value list created.")
 
-        perfect = sm.image_process(["Starry.fit"],".\\Fit_Images\\")
-        trial = sm.image_process(file_names,file_location)
-        trial.create_masks()
-        trial.save_mask()
-        trial.data_w_mask()
-        list1 = []
-        list2 = []
-        for i in range(len(file_names)):
-            a1,a2 = trial.cloud_percentage_original(trial.trimmed_data[i])            
-            list1.append([a1,a2])
-            adj_img = trial.perfect_minus(trial.hdu_data[i],perfect.hdu_data[0])
+
+def create_values(file_names,file_location,overwrite = False):
+    perfect = sm.image_process(["Starry.fit"],".\\Fit_Images\\")
+    
+    loaded_values = []
+    for i in range(len(file_names)):
+        x=file_names[i]
+        if os.path.exists(file_location+"\\Results_",x[:len(x)-4],".pkl"):
+            myFile = open("Results.pkl","rb")
+            loaded_list = pickle.load(myFile)
+            loaded_values.append(loaded_list)
+            myFile.close()
+        else:
+            trial = sm.image_process(file_names[i],file_location[i])
+            trial.create_masks()
+            trial.data_w_mask()
+            a1,a2 = trial.cloud_percentage_original(trial.trimmed_data[0])            
+            adj_img = trial.perfect_minus(trial.hdu_data[0],perfect.hdu_data[0])
             b1,b2 = trial.cloud_percentage_original(adj_img)
-            list2.append([b1,b2])
-            print(i+1,"/",len(file_names))
-            #print("Image shown")
-            #fig, (ax0,ax1) = plt.subplots(nrows=1,ncols=2,sharex=True)
-            #ax0.imshow(img,cmap = "gray")
-            #ax1.imshow(adj_img,cmap = "gray")
-            #plt.show()
-        
-        myFile = open("Results.pkl","wb")
-        pickle.dump([list1,list2],myFile)
-        myFile.close()
-        loaded_values = [list1,list2]
+            c1 = normalise(a1)
+            c2 = normalise(a2)
+            d1 = normalise(b1)
+            d2 = normalise(b2)
+            loaded_values.append([c1,c2,d1,d2])
+            myFile = open(file_location+"\\Results_",x[:len(x)-4],".pkl","wb")
+            pickle.dump([c1,c2,d1,d2],myFile)
+            myFile.close()
+
+        print(i+1,"/",len(file_names))
+
     return loaded_values
 
-def load_values():
-    myFile = open("Results.pkl","rb")
-    loaded_list = pickle.load(myFile)
-    myFile.close()
-    return loaded_list
-
-def flatten(array1,array2):
-    output = []
-    for i in range(len(array1)):
-        idx_1 = array1[i][0]
-        idx_2 = array1[i][1]
-        idx_3 = array2[i][0]
-        idx_4 = array2[i][1]    
-
-        a = normalise(idx_1)
-        b = normalise(idx_2)
-        c = normalise(idx_3)
-        d = normalise(idx_4)
-
-        output.append([a,b,c,d])
-
-    return output
 
 def normalise(value):
     return 0.5(value/(1+value)+1)
 
-load_list = create_values()
+if os.path.exists(".\\Cloud_cover_model.h5"):
+    model = tf.keras.models.load_model('.\\Cloud_cover_model.h5')
+else:
+    load_list = create_values(training_files,training_location)
+    l1 = load_list[0]
+    l2 = load_list[1]
+    #print(l1,l2)
+
+    train_array = flatten(l1,l2)
+
+    model = tf.keras.Sequential([
+        tf.keras.layers.Flatten(input_shape=(4)),  ## Flattens the 28 by 28 training image to a 784 1D array. Defines input nodes
+        tf.keras.layers.Dense(15, activation='relu'),  ## Defines the first layer of the nn with a ReLu activation function
+        tf.keras.layers.Dense(10, activation='relu'),
+        tf.keras.layers.Dense(1)])  
+
+    model.compile(optimizer='adam',                     ## Algorithem for updating the model using the loss function
+                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), ## Specify where the loss function is calculated from
+                metrics=['accuracy'])    
+
+    model.fit(train_array, training_values, epochs=10)
+    model.save("Cloud_cover_model.h5")
+
+
+## Create test data
+load_list = create_values(file_names,file_location)
 l1 = load_list[0]
 l2 = load_list[1]
-#print(l1,l2)
 
-train = flatten(l1,l2)
-training_values = copy(estimated_cloud)
-print(training_values)
+## Evaluate the test data against the model for an accuracy test
+test_array = flatten(l1,l2)
+test_loss, test_acc = model.evaluate(test_array,  estimated_cloud, verbose=2)
+print('\nTest accuracy:', test_acc)
 
-model = tf.keras.Sequential([
-    tf.keras.layers.Flatten(input_shape=(4)),  ## Flattens the 28 by 28 training image to a 784 1D array. Defines input nodes
-    tf.keras.layers.Dense(15, activation='relu'),  ## Defines the first layer of the nn with a ReLu activation function
-    tf.keras.layers.Dense(10, activation='relu'),
-    tf.keras.layers.Dense(1)])  
-
-model.compile(optimizer='adam',                     ## Algorithem for updating the model using the loss function
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), ## Specify where the loss function is calculated from
-              metrics=['accuracy'])    
-
-model.fit(train, training_values, epochs=10)
-
-test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
+## Return the actual value obtained from the model
+probability_model = tf.keras.Sequential([model,                         
+                                         tf.keras.layers.Softmax()])
+predictions = probability_model.predict(test_array) 
+print(predictions)    
 
 """ net = nn.net((4,10,5,10,1))
 for k in range(100):
